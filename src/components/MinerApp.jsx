@@ -190,7 +190,6 @@ export default function MinerApp({encrypt, decrypt, setAuthorized}) {
       const gasLimit = await getGasLimit(from, to, method)
       const result = await method.send({from, gasLimit});
     } catch (error) {
-      console.error(JSON.stringify(error))
       if (error.message === 'Error happened while trying to execute a function inside a smart contract') {
         const message = error.cause?.message;
         if (methodName !== "claimWeeklyChest") throw new Error(message);

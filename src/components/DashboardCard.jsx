@@ -21,8 +21,6 @@ function DashboardCard({name, publicKey, id, balance, claimTimestamp, sizeLimit,
 
   const currentRefSizeWidth = currentRefSize / refSize * 122 + 'px';
 
-  console.log('Ты че бля')
-
   function getRandomInt(min, max) {
     const minCeiled = Math.ceil(min);
     const maxFloored = Math.floor(max);
@@ -37,7 +35,6 @@ function DashboardCard({name, publicKey, id, balance, claimTimestamp, sizeLimit,
 
     const remainingTime = (1 - percent) * fillingTime
     const random = getRandomInt(remainingTime * 950, remainingTime * 1000)
-    console.log(name + ' ' + percent + ' ' + random)
 
     const timeout = setTimeout(miningQueue, random, index, fillingTime, id);
 

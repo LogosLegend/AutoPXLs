@@ -7,12 +7,11 @@ function DashboardCardDisabled({name, publicKey, error, index, setName, openPopu
   async function refresh() {
     if(!buttonDisabled) {
       setButtonDisabled(true)
-      console.log(index)
       await updateProfiles(index)
       setButtonDisabled(false)
     }
   }
-console.log('хихихаха')
+
   return (
     <div className="profile">
       {publicKey
