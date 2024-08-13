@@ -13,7 +13,7 @@ export default function Authentication({value, setValue, setAuthorized, setError
     if (value) {
       if(!buttonDisabled) {
         setTimeout(setButtonDisabled, 0, true);
-        setTimeout(setAnimation, 100, true);
+        const timeout = setTimeout(setAnimation, 100, true);
         
         if (value) {
           if (hash) {
@@ -30,6 +30,8 @@ export default function Authentication({value, setValue, setAuthorized, setError
             setAuthorized(true);
           }
         }
+
+        clearTimeout(timeout); //Если скрипт выполнится быстрее чем за 0.1 секунду, таймер не запустится
         setAnimation(false);
         setButtonDisabled(false);
       }

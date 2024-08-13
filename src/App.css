@@ -286,12 +286,12 @@ h1, h2, h3, p {
 
 .container__button-dashboard {
   margin-right: 10px;
-  background: url(./dashboard.png);
+  background: url(/dashboard.png);
   width: 210px;
 }
 
 .container__button-profiles {
-  background: url(./profiles.png);
+  background: url(/profiles.png);
   width: 179px;
 }
 
