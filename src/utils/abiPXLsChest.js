@@ -1,1 +1,377 @@
-export default [{"type":"constructor","stateMutability":"nonpayable","inputs":[]},{"type":"error","name":"AccessControlBadConfirmation","inputs":[]},{"type":"error","name":"AccessControlUnauthorizedAccount","inputs":[{"type":"address","name":"account","internalType":"address"},{"type":"bytes32","name":"neededRole","internalType":"bytes32"}]},{"type":"event","name":"FreeChestClaimed","inputs":[{"type":"uint64","name":"userId","internalType":"uint64","indexed":true},{"type":"address","name":"account","internalType":"address","indexed":true},{"type":"uint256","name":"chestId","internalType":"uint256","indexed":true}],"anonymous":false},{"type":"event","name":"RoleAdminChanged","inputs":[{"type":"bytes32","name":"role","internalType":"bytes32","indexed":true},{"type":"bytes32","name":"previousAdminRole","internalType":"bytes32","indexed":true},{"type":"bytes32","name":"newAdminRole","internalType":"bytes32","indexed":true}],"anonymous":false},{"type":"event","name":"RoleGranted","inputs":[{"type":"bytes32","name":"role","internalType":"bytes32","indexed":true},{"type":"address","name":"account","internalType":"address","indexed":true},{"type":"address","name":"sender","internalType":"address","indexed":true}],"anonymous":false},{"type":"event","name":"RoleRevoked","inputs":[{"type":"bytes32","name":"role","internalType":"bytes32","indexed":true},{"type":"address","name":"account","internalType":"address","indexed":true},{"type":"address","name":"sender","internalType":"address","indexed":true}],"anonymous":false},{"type":"event","name":"WeeklyChestClaimed","inputs":[{"type":"uint64","name":"userId","internalType":"uint64","indexed":true},{"type":"address","name":"account","internalType":"address","indexed":true},{"type":"uint256","name":"chestId","internalType":"uint256","indexed":true}],"anonymous":false},{"type":"function","stateMutability":"view","outputs":[{"type":"bytes32","name":"","internalType":"bytes32"}],"name":"DEFAULT_ADMIN_ROLE","inputs":[]},{"type":"function","stateMutability":"view","outputs":[{"type":"bytes32","name":"","internalType":"bytes32"}],"name":"SETTER_ROLE","inputs":[]},{"type":"function","stateMutability":"nonpayable","outputs":[],"name":"claimFreeChest","inputs":[{"type":"uint256","name":"chestId","internalType":"uint256"}]},{"type":"function","stateMutability":"nonpayable","outputs":[],"name":"claimWeeklyChest","inputs":[]},{"type":"function","stateMutability":"view","outputs":[{"type":"uint256","name":"","internalType":"uint256"}],"name":"getLastFreeClaim","inputs":[{"type":"uint64","name":"userId","internalType":"uint64"}]},{"type":"function","stateMutability":"view","outputs":[{"type":"bytes32","name":"","internalType":"bytes32"}],"name":"getRoleAdmin","inputs":[{"type":"bytes32","name":"role","internalType":"bytes32"}]},{"type":"function","stateMutability":"view","outputs":[{"type":"uint256[]","name":"","internalType":"uint256[]"}],"name":"getUserFreeChests","inputs":[{"type":"uint64","name":"id","internalType":"uint64"}]},{"type":"function","stateMutability":"nonpayable","outputs":[],"name":"grantRole","inputs":[{"type":"bytes32","name":"role","internalType":"bytes32"},{"type":"address","name":"account","internalType":"address"}]},{"type":"function","stateMutability":"view","outputs":[{"type":"bool","name":"","internalType":"bool"}],"name":"hasRole","inputs":[{"type":"bytes32","name":"role","internalType":"bytes32"},{"type":"address","name":"account","internalType":"address"}]},{"type":"function","stateMutability":"nonpayable","outputs":[],"name":"renounceRole","inputs":[{"type":"bytes32","name":"role","internalType":"bytes32"},{"type":"address","name":"callerConfirmation","internalType":"address"}]},{"type":"function","stateMutability":"nonpayable","outputs":[],"name":"revokeRole","inputs":[{"type":"bytes32","name":"role","internalType":"bytes32"},{"type":"address","name":"account","internalType":"address"}]},{"type":"function","stateMutability":"nonpayable","outputs":[],"name":"setChestAddress","inputs":[{"type":"address","name":"newAddress","internalType":"address"}]},{"type":"function","stateMutability":"nonpayable","outputs":[],"name":"setCoreAddress","inputs":[{"type":"address","name":"newAddress","internalType":"address"}]},{"type":"function","stateMutability":"nonpayable","outputs":[],"name":"setUsersFreeChest","inputs":[{"type":"uint64[]","name":"id","internalType":"uint64[]"},{"type":"uint256","name":"chestId","internalType":"uint256"}]},{"type":"function","stateMutability":"nonpayable","outputs":[],"name":"setWeeklyChest","inputs":[{"type":"uint256","name":"chestId","internalType":"uint256"}]},{"type":"function","stateMutability":"view","outputs":[{"type":"bool","name":"","internalType":"bool"}],"name":"supportsInterface","inputs":[{"type":"bytes4","name":"interfaceId","internalType":"bytes4"}]}]
+export default [{
+    "type": "constructor",
+    "stateMutability": "nonpayable",
+    "inputs": [{
+        "type": "address",
+        "name": "coreAddress",
+        "internalType": "address"
+    }, {
+        "type": "address",
+        "name": "chestAddress",
+        "internalType": "address"
+    }]
+}, {
+    "type": "error",
+    "name": "AccessControlBadConfirmation",
+    "inputs": []
+}, {
+    "type": "error",
+    "name": "AccessControlUnauthorizedAccount",
+    "inputs": [{
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }, {
+        "type": "bytes32",
+        "name": "neededRole",
+        "internalType": "bytes32"
+    }]
+}, {
+    "type": "error",
+    "name": "DelegateCallFailed",
+    "inputs": [{
+        "type": "bytes",
+        "name": "data",
+        "internalType": "bytes"
+    }]
+}, {
+    "type": "error",
+    "name": "TooShortActivity",
+    "inputs": [{
+        "type": "uint256",
+        "name": "",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "event",
+    "name": "FreeChestClaimed",
+    "inputs": [{
+        "type": "uint64",
+        "name": "userId",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": true
+    }, {
+        "type": "uint256",
+        "name": "chestId",
+        "internalType": "uint256",
+        "indexed": true
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "RoleAdminChanged",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32",
+        "indexed": true
+    }, {
+        "type": "bytes32",
+        "name": "previousAdminRole",
+        "internalType": "bytes32",
+        "indexed": true
+    }, {
+        "type": "bytes32",
+        "name": "newAdminRole",
+        "internalType": "bytes32",
+        "indexed": true
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "RoleGranted",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "sender",
+        "internalType": "address",
+        "indexed": true
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "RoleRevoked",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "sender",
+        "internalType": "address",
+        "indexed": true
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "WeeklyChestClaimed",
+    "inputs": [{
+        "type": "uint64",
+        "name": "userId",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": true
+    }, {
+        "type": "uint256",
+        "name": "chestId",
+        "internalType": "uint256",
+        "indexed": true
+    }],
+    "anonymous": false
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "DEFAULT_ADMIN_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "EDITOR_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "PROXY_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "claimFreeChest",
+    "inputs": [{
+        "type": "uint256",
+        "name": "chestId",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "claimWeeklyChest",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [{
+        "type": "bool",
+        "name": "",
+        "internalType": "bool"
+    }, {
+        "type": "bytes",
+        "name": "",
+        "internalType": "bytes"
+    }],
+    "name": "delegate",
+    "inputs": [{
+        "type": "string",
+        "name": "method",
+        "internalType": "string"
+    }, {
+        "type": "bytes",
+        "name": "callData",
+        "internalType": "bytes"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "getRoleAdmin",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint256[]",
+        "name": "",
+        "internalType": "uint256[]"
+    }],
+    "name": "getUserFreeChests",
+    "inputs": [{
+        "type": "uint64",
+        "name": "userId",
+        "internalType": "uint64"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "grantRole",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bool",
+        "name": "",
+        "internalType": "bool"
+    }],
+    "name": "hasRole",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "renounceRole",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }, {
+        "type": "address",
+        "name": "callerConfirmation",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "revokeRole",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setUsersFreeChest",
+    "inputs": [{
+        "type": "uint64[]",
+        "name": "userId",
+        "internalType": "uint64[]"
+    }, {
+        "type": "uint256",
+        "name": "chestId",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setWeeklyChest",
+    "inputs": [{
+        "type": "uint256",
+        "name": "chestId",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bool",
+        "name": "",
+        "internalType": "bool"
+    }],
+    "name": "supportsInterface",
+    "inputs": [{
+        "type": "bytes4",
+        "name": "interfaceId",
+        "internalType": "bytes4"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bool",
+        "name": "",
+        "internalType": "bool"
+    }],
+    "name": "userFreeChestId",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64"
+    }, {
+        "type": "uint256",
+        "name": "chestId",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint256",
+        "name": "",
+        "internalType": "uint256"
+    }],
+    "name": "weeklyChestId",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "xClearActivity",
+    "inputs": [{
+        "type": "bytes",
+        "name": "encoded",
+        "internalType": "bytes"
+    }]
+}]

@@ -1,7 +1,11 @@
 export default [{
     "type": "constructor",
     "stateMutability": "nonpayable",
-    "inputs": []
+    "inputs": [{
+        "type": "address",
+        "name": "coreMathAddress",
+        "internalType": "address"
+    }]
 }, {
     "type": "error",
     "name": "AccessControlBadConfirmation",
@@ -19,11 +23,19 @@ export default [{
         "internalType": "bytes32"
     }]
 }, {
+    "type": "error",
+    "name": "DelegateCallFailed",
+    "inputs": [{
+        "type": "bytes",
+        "name": "data",
+        "internalType": "bytes"
+    }]
+}, {
     "type": "event",
     "name": "Burn",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64",
         "indexed": true
     }, {
@@ -58,7 +70,27 @@ export default [{
     "name": "Claim",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": false
+    }, {
+        "type": "uint256",
+        "name": "amount",
+        "internalType": "uint256",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "ClaimReferral",
+    "inputs": [{
+        "type": "uint64",
+        "name": "userId",
         "internalType": "uint64",
         "indexed": true
     }, {
@@ -78,7 +110,7 @@ export default [{
     "name": "GrantAccess",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64",
         "indexed": true
     }, {
@@ -98,7 +130,7 @@ export default [{
     "name": "LevelUpReferral",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64",
         "indexed": true
     }, {
@@ -123,7 +155,7 @@ export default [{
     "name": "LevelUpSize",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64",
         "indexed": true
     }, {
@@ -148,7 +180,7 @@ export default [{
     "name": "LevelUpSpeed",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64",
         "indexed": true
     }, {
@@ -164,21 +196,6 @@ export default [{
     }, {
         "type": "uint256",
         "name": "price",
-        "internalType": "uint256",
-        "indexed": false
-    }],
-    "anonymous": false
-}, {
-    "type": "event",
-    "name": "Recieved",
-    "inputs": [{
-        "type": "address",
-        "name": "account",
-        "internalType": "address",
-        "indexed": true
-    }, {
-        "type": "uint256",
-        "name": "amount",
         "internalType": "uint256",
         "indexed": false
     }],
@@ -218,7 +235,7 @@ export default [{
     "name": "Reinvest",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64",
         "indexed": true
     }, {
@@ -295,45 +312,10 @@ export default [{
     "anonymous": false
 }, {
     "type": "event",
-    "name": "SetAccessController",
-    "inputs": [{
-        "type": "address",
-        "name": "controller",
-        "internalType": "address",
-        "indexed": false
-    }],
-    "anonymous": false
-}, {
-    "type": "event",
-    "name": "SetBurner",
-    "inputs": [{
-        "type": "address",
-        "name": "controller",
-        "internalType": "address",
-        "indexed": false
-    }],
-    "anonymous": false
-}, {
-    "type": "event",
-    "name": "SetClaimsDisabled",
-    "inputs": [{
-        "type": "address",
-        "name": "caller",
-        "internalType": "address",
-        "indexed": false
-    }, {
-        "type": "bool",
-        "name": "value",
-        "internalType": "bool",
-        "indexed": false
-    }],
-    "anonymous": false
-}, {
-    "type": "event",
     "name": "SetParent",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64",
         "indexed": true
     }, {
@@ -341,41 +323,6 @@ export default [{
         "name": "parent",
         "internalType": "uint64",
         "indexed": true
-    }],
-    "anonymous": false
-}, {
-    "type": "event",
-    "name": "SetRefersDisabled",
-    "inputs": [{
-        "type": "address",
-        "name": "caller",
-        "internalType": "address",
-        "indexed": false
-    }, {
-        "type": "bool",
-        "name": "value",
-        "internalType": "bool",
-        "indexed": false
-    }],
-    "anonymous": false
-}, {
-    "type": "event",
-    "name": "SetStorageDisabled",
-    "inputs": [{
-        "type": "uint64",
-        "name": "id",
-        "internalType": "uint64",
-        "indexed": true
-    }, {
-        "type": "address",
-        "name": "caller",
-        "internalType": "address",
-        "indexed": false
-    }, {
-        "type": "bool",
-        "name": "value",
-        "internalType": "bool",
-        "indexed": false
     }],
     "anonymous": false
 }, {
@@ -462,6 +409,16 @@ export default [{
     "type": "function",
     "stateMutability": "view",
     "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "PROXY_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
         "type": "uint256",
         "name": "",
         "internalType": "uint256"
@@ -493,7 +450,7 @@ export default [{
     "name": "burnStorage",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -513,7 +470,7 @@ export default [{
     "name": "buyReferralLevel",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -523,7 +480,7 @@ export default [{
     "name": "buySizeLevel",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -533,7 +490,7 @@ export default [{
     "name": "buySpeedLevel",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -543,7 +500,7 @@ export default [{
     "name": "changeParent",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }, {
         "type": "uint64",
@@ -557,7 +514,7 @@ export default [{
     "name": "claimFor",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -567,7 +524,7 @@ export default [{
     "name": "claimForRef",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -577,17 +534,17 @@ export default [{
     "name": "claimReferral",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
     "type": "function",
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "outputs": [],
     "name": "claimReward",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -603,46 +560,24 @@ export default [{
 }, {
     "type": "function",
     "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "disableClaims",
-    "inputs": []
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "disableRefers",
-    "inputs": []
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "disableStorage",
+    "outputs": [{
+        "type": "bool",
+        "name": "",
+        "internalType": "bool"
+    }, {
+        "type": "bytes",
+        "name": "",
+        "internalType": "bytes"
+    }],
+    "name": "delegate",
     "inputs": [{
-        "type": "uint64",
-        "name": "id",
-        "internalType": "uint64"
-    }]
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "enableClaims",
-    "inputs": []
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "enableRefers",
-    "inputs": []
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "enableStorage",
-    "inputs": [{
-        "type": "uint64",
-        "name": "id",
-        "internalType": "uint64"
+        "type": "string",
+        "name": "method",
+        "internalType": "string"
+    }, {
+        "type": "bytes",
+        "name": "callData",
+        "internalType": "bytes"
     }]
 }, {
     "type": "function",
@@ -669,7 +604,7 @@ export default [{
     "name": "getIdAddress",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -769,6 +704,35 @@ export default [{
             "type": "uint256",
             "name": "activity",
             "internalType": "uint256"
+        }, {
+            "type": "uint24",
+            "name": "miningMultiplicator",
+            "internalType": "uint24"
+        }]
+    }, {
+        "type": "tuple",
+        "name": "base",
+        "internalType": "struct BaseParams",
+        "components": [{
+            "type": "uint256",
+            "name": "speed",
+            "internalType": "uint256"
+        }, {
+            "type": "uint256",
+            "name": "size",
+            "internalType": "uint256"
+        }, {
+            "type": "uint24",
+            "name": "difficulty",
+            "internalType": "uint24"
+        }, {
+            "type": "uint24",
+            "name": "halvingRatio",
+            "internalType": "uint24"
+        }, {
+            "type": "uint24",
+            "name": "burnRate",
+            "internalType": "uint24"
         }]
     }, {
         "type": "uint256[3]",
@@ -802,7 +766,7 @@ export default [{
     "name": "getStorage",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -812,7 +776,7 @@ export default [{
     "name": "grantAccess",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }, {
         "type": "address",
@@ -859,62 +823,10 @@ export default [{
     "type": "function",
     "stateMutability": "nonpayable",
     "outputs": [],
-    "name": "migrateMany",
-    "inputs": [{
-        "type": "uint64[]",
-        "name": "users",
-        "internalType": "uint64[]"
-    }, {
-        "type": "address",
-        "name": "source",
-        "internalType": "address"
-    }]
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "migrateStorage",
-    "inputs": [{
-        "type": "uint64",
-        "name": "id",
-        "internalType": "uint64"
-    }, {
-        "type": "uint64",
-        "name": "parent",
-        "internalType": "uint64"
-    }, {
-        "type": "address",
-        "name": "account",
-        "internalType": "address"
-    }, {
-        "type": "uint256",
-        "name": "claimTimestamp",
-        "internalType": "uint256"
-    }, {
-        "type": "uint8",
-        "name": "sizeLevel",
-        "internalType": "uint8"
-    }, {
-        "type": "uint8",
-        "name": "speedLevel",
-        "internalType": "uint8"
-    }, {
-        "type": "uint256",
-        "name": "claimed",
-        "internalType": "uint256"
-    }, {
-        "type": "uint256",
-        "name": "balance",
-        "internalType": "uint256"
-    }]
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
     "name": "mintForOne",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }, {
         "type": "uint256",
@@ -928,7 +840,7 @@ export default [{
     "name": "mintWithClaim",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }, {
         "type": "uint256",
@@ -952,7 +864,7 @@ export default [{
     "name": "promoteReferralLevel",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -962,7 +874,7 @@ export default [{
     "name": "promoteSizeLevel",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -972,7 +884,7 @@ export default [{
     "name": "promoteSpeedLevel",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }]
 }, {
@@ -1007,50 +919,10 @@ export default [{
     "type": "function",
     "stateMutability": "nonpayable",
     "outputs": [],
-    "name": "setBaseSize",
-    "inputs": [{
-        "type": "uint256",
-        "name": "size",
-        "internalType": "uint256"
-    }]
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "setBaseSpeed",
-    "inputs": [{
-        "type": "uint256",
-        "name": "speed",
-        "internalType": "uint256"
-    }]
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "setBurnRate",
-    "inputs": [{
-        "type": "uint256",
-        "name": "burnRate",
-        "internalType": "uint256"
-    }]
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "setDiffuculty",
-    "inputs": [{
-        "type": "uint256",
-        "name": "value",
-        "internalType": "uint256"
-    }]
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
     "name": "setMultipliers",
     "inputs": [{
         "type": "uint64",
-        "name": "id",
+        "name": "userId",
         "internalType": "uint64"
     }, {
         "type": "uint24[3]",
@@ -1064,26 +936,6 @@ export default [{
         "type": "uint24[3]",
         "name": "price",
         "internalType": "uint24[3]"
-    }]
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "setParentsPercents",
-    "inputs": [{
-        "type": "uint256[2]",
-        "name": "_percents",
-        "internalType": "uint256[2]"
-    }]
-}, {
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "outputs": [],
-    "name": "setReceiver",
-    "inputs": [{
-        "type": "address",
-        "name": "account",
-        "internalType": "address payable"
     }]
 }, {
     "type": "function",
@@ -1140,6 +992,25 @@ export default [{
     "name": "totalSupply",
     "inputs": []
 }, {
-    "type": "receive",
-    "stateMutability": "payable"
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "updateParameter",
+    "inputs": [{
+        "type": "uint64",
+        "name": "userId",
+        "internalType": "uint64"
+    }, {
+        "type": "uint8",
+        "name": "",
+        "internalType": "uint8"
+    }, {
+        "type": "uint24",
+        "name": "multiplier",
+        "internalType": "uint24"
+    }, {
+        "type": "uint256",
+        "name": "",
+        "internalType": "uint256"
+    }]
 }]
