@@ -1,14 +1,18 @@
 import { useState, useCallback } from "react";
-import { ProfilesMenu, ProfilesFormItem } from './index.jsx';
-import { profilesErrors } from '../utils/Constants.jsx';
+import { ProfilesMenu, ProfilesFormItem } from './index';
+import { profilesErrors } from '../utils/Constants';
+import { encrypt } from '../utils/Functions';
+import { useDispatch } from 'react-redux';
+import { saveProfiles } from '../store/profilesSlice';
 
-export default function ProfilesForm({profilesData, saveData}) {
+export default function ProfilesForm({profilesData, setLoading, changePage, password}) {
+  const dispatch = useDispatch();
   const [profiles, setProfiles] = useState(profilesData);
   const [buttonSubmitDisabled, setButtonSubmitDisabled] = useState(false);
   const [error, setError] = useState({class: '', message: ''});
 
   const addProfile = useCallback(() => {
-    setProfiles(prev => [...prev, {name: '', privateKey: '', disabled: false}])
+    setProfiles(prev => [...prev, {name: '', privateKey: '', proxy: '', disabled: false}])
   }, []);
 
   const removeProfile = useCallback((index) => {
@@ -30,7 +34,15 @@ export default function ProfilesForm({profilesData, saveData}) {
   const changePrivateKey = useCallback((index, value) => {
     setProfiles(prev => {
       const newProfiles = [...prev];
-      newProfiles[index] = {name: newProfiles[index].name, privateKey: value, disabled: false};
+      newProfiles[index] = {name: newProfiles[index].name, privateKey: value, proxy: newProfiles[index].proxy, disabled: false};
+      return newProfiles;
+    });
+  }, []);
+
+  const changeProxy = useCallback((index, value) => {
+    setProfiles(prev => {
+      const newProfiles = [...prev];
+      newProfiles[index].proxy = value;
       return newProfiles;
     });
   }, []);
@@ -49,7 +61,7 @@ export default function ProfilesForm({profilesData, saveData}) {
            .flatMap(arr => arr.slice(1)); //Удаление уникального значения из массивов с дубликатами и преобразование всех дубликатов в единый массив
   }
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
 
     if (!buttonSubmitDisabled) {
@@ -62,7 +74,7 @@ export default function ProfilesForm({profilesData, saveData}) {
         return acc;
       }, []);
 
-      if (isEmptyInputs.length) { //Вызвать ошибку и пометить профили без ключей
+      if (isEmptyInputs.length) { //Выбросить ошибку и пометить профили без ключей
         for (const index of isEmptyInputs) {
           newProfiles[index].error = profilesErrors.emptyError.class;
           setProfiles(newProfiles);
@@ -72,20 +84,23 @@ export default function ProfilesForm({profilesData, saveData}) {
         const privateKeys = newProfiles.map(obj => obj.privateKey.toLowerCase());
         const duplicates = findDuplicates(privateKeys); //Найти дубликаты ключей
 
-        if (duplicates.length) { //Вызвать ошибку и пометить дубликаты ключей
+        if (duplicates.length) { //Выбросить ошибку и пометить дубликаты ключей
           for (const index of duplicates) {
             newProfiles[index].error = profilesErrors.duplicatedError.class;
             setProfiles(newProfiles);
             setError(profilesErrors.duplicatedError);
           }
         } else {
-          saveData(newProfiles)
+          changePage('dashboard');
+          setLoading(newProfiles.length);
+          await dispatch(saveProfiles(newProfiles));
+          setLoading(false);
         }
       }
 
       setButtonSubmitDisabled(false);
     }
-  }
+  };
 
   return (
     <form className="form" onSubmit={submit}>
@@ -96,16 +111,19 @@ export default function ProfilesForm({profilesData, saveData}) {
           index={index}
           name={profile.name}
           privateKey={profile.privateKey}
+          proxy={profile.proxy}
           error={profile.error}
           removeProfile={removeProfile}
           changeName={changeName}
           changePrivateKey={changePrivateKey}
+          changeProxy={changeProxy}
         />
       ))}
-      <button className={`button button_middle ${buttonSubmitDisabled ? 'button_loading button_middle_loading' : ''}`}
-              type="submit" disabled={buttonSubmitDisabled}>
-        {!buttonSubmitDisabled && 'Save'}
-      </button>
+      <div className="form__button-container">
+        <button className={`button button_middle ${buttonSubmitDisabled ? 'button_loading button_middle_loading' : ''}`} type="submit" disabled={buttonSubmitDisabled}>
+          Save
+        </button>
+      </div>
     </form>
   );
-}
+};

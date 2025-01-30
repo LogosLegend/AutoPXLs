@@ -1,0 +1,879 @@
+export default [{
+    "type": "constructor",
+    "stateMutability": "nonpayable",
+    "inputs": [{
+        "type": "string",
+        "name": "tokenSymbol",
+        "internalType": "string"
+    }, {
+        "type": "string",
+        "name": "tokenName",
+        "internalType": "string"
+    }, {
+        "type": "uint256",
+        "name": "initialSupply",
+        "internalType": "uint256"
+    }, {
+        "type": "address",
+        "name": "coreAddress",
+        "internalType": "address"
+    }]
+}, {
+    "type": "error",
+    "name": "AccessControlBadConfirmation",
+    "inputs": []
+}, {
+    "type": "error",
+    "name": "AccessControlUnauthorizedAccount",
+    "inputs": [{
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }, {
+        "type": "bytes32",
+        "name": "neededRole",
+        "internalType": "bytes32"
+    }]
+}, {
+    "type": "error",
+    "name": "DelegateCallFailed",
+    "inputs": [{
+        "type": "bytes",
+        "name": "data",
+        "internalType": "bytes"
+    }]
+}, {
+    "type": "event",
+    "name": "Burn",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": false
+    }, {
+        "type": "uint256",
+        "name": "amount",
+        "internalType": "uint256",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "BurnTotalSupply",
+    "inputs": [{
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": false
+    }, {
+        "type": "uint256",
+        "name": "amount",
+        "internalType": "uint256",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "Claim",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": false
+    }, {
+        "type": "uint256",
+        "name": "amount",
+        "internalType": "uint256",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "ReferReward",
+    "inputs": [{
+        "type": "uint64",
+        "name": "claimerId",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "uint64",
+        "name": "child",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": false
+    }, {
+        "type": "uint256",
+        "name": "amount",
+        "internalType": "uint256",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "Reinvest",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": false
+    }, {
+        "type": "uint256",
+        "name": "value",
+        "internalType": "uint256",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "RoleAdminChanged",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32",
+        "indexed": true
+    }, {
+        "type": "bytes32",
+        "name": "previousAdminRole",
+        "internalType": "bytes32",
+        "indexed": true
+    }, {
+        "type": "bytes32",
+        "name": "newAdminRole",
+        "internalType": "bytes32",
+        "indexed": true
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "RoleGranted",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "sender",
+        "internalType": "address",
+        "indexed": true
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "RoleRevoked",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "sender",
+        "internalType": "address",
+        "indexed": true
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "SetAccessController",
+    "inputs": [{
+        "type": "address",
+        "name": "controller",
+        "internalType": "address",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "SetBurner",
+    "inputs": [{
+        "type": "address",
+        "name": "controller",
+        "internalType": "address",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "SetClaimsDisabled",
+    "inputs": [{
+        "type": "address",
+        "name": "caller",
+        "internalType": "address",
+        "indexed": false
+    }, {
+        "type": "bool",
+        "name": "value",
+        "internalType": "bool",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "SetRefersDisabled",
+    "inputs": [{
+        "type": "address",
+        "name": "caller",
+        "internalType": "address",
+        "indexed": false
+    }, {
+        "type": "bool",
+        "name": "value",
+        "internalType": "bool",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "SetStorageDisabled",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "caller",
+        "internalType": "address",
+        "indexed": false
+    }, {
+        "type": "bool",
+        "name": "value",
+        "internalType": "bool",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "event",
+    "name": "Transfer",
+    "inputs": [{
+        "type": "address",
+        "name": "from",
+        "internalType": "address",
+        "indexed": true
+    }, {
+        "type": "address",
+        "name": "to",
+        "internalType": "address",
+        "indexed": true
+    }, {
+        "type": "uint256",
+        "name": "value",
+        "internalType": "uint256",
+        "indexed": false
+    }],
+    "anonymous": false
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "BURNER_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "CLAIMER_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "DEFAULT_ADMIN_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "MINTER_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "MULTIPLIER_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "PROXY_ROLE",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint256",
+        "name": "",
+        "internalType": "uint256"
+    }],
+    "name": "balanceOf",
+    "inputs": [{
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint256",
+        "name": "",
+        "internalType": "uint256"
+    }],
+    "name": "baseSize",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint256",
+        "name": "",
+        "internalType": "uint256"
+    }],
+    "name": "baseSpeed",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "burn",
+    "inputs": [{
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }, {
+        "type": "uint256",
+        "name": "amount",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "burnStorage",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "burnTotalSupply",
+    "inputs": [{
+        "type": "uint256",
+        "name": "amount",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "claimFor",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "claimReward",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint8",
+        "name": "",
+        "internalType": "uint8"
+    }],
+    "name": "decimals",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [{
+        "type": "bool",
+        "name": "",
+        "internalType": "bool"
+    }, {
+        "type": "bytes",
+        "name": "",
+        "internalType": "bytes"
+    }],
+    "name": "delegate",
+    "inputs": [{
+        "type": "string",
+        "name": "method",
+        "internalType": "string"
+    }, {
+        "type": "bytes",
+        "name": "callData",
+        "internalType": "bytes"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "disableClaims",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "disableMining",
+    "inputs": [{
+        "type": "uint64",
+        "name": "userId",
+        "internalType": "uint64"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "disableRefers",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "enableClaims",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "enableMining",
+    "inputs": [{
+        "type": "uint64",
+        "name": "userId",
+        "internalType": "uint64"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "enableRefers",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bytes32",
+        "name": "",
+        "internalType": "bytes32"
+    }],
+    "name": "getRoleAdmin",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "tuple",
+        "name": "user",
+        "internalType": "struct SecondStorage",
+        "components": [{
+            "type": "uint256",
+            "name": "claimTimestamp",
+            "internalType": "uint256"
+        }, {
+            "type": "uint256",
+            "name": "claimed",
+            "internalType": "uint256"
+        }, {
+            "type": "uint24",
+            "name": "speedMultiplicator",
+            "internalType": "uint24"
+        }, {
+            "type": "uint24",
+            "name": "sizeMultiplicator",
+            "internalType": "uint24"
+        }, {
+            "type": "uint256",
+            "name": "speedAdder",
+            "internalType": "uint256"
+        }, {
+            "type": "uint256",
+            "name": "sizeAdder",
+            "internalType": "uint256"
+        }, {
+            "type": "bool",
+            "name": "disabled",
+            "internalType": "bool"
+        }]
+    }, {
+        "type": "uint256",
+        "name": "mined",
+        "internalType": "uint256"
+    }, {
+        "type": "uint256",
+        "name": "sizeLimit",
+        "internalType": "uint256"
+    }, {
+        "type": "uint256",
+        "name": "rewardPerSecond",
+        "internalType": "uint256"
+    }, {
+        "type": "uint256",
+        "name": "balance",
+        "internalType": "uint256"
+    }, {
+        "type": "uint256",
+        "name": "coins",
+        "internalType": "uint256"
+    }],
+    "name": "getStorage",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "grantRole",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bool",
+        "name": "",
+        "internalType": "bool"
+    }],
+    "name": "hasRole",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint8",
+        "name": "",
+        "internalType": "uint8"
+    }],
+    "name": "minSizeLevel",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint8",
+        "name": "",
+        "internalType": "uint8"
+    }],
+    "name": "minSpeedLevel",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "mintForOne",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64"
+    }, {
+        "type": "uint256",
+        "name": "amount",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "mintWithClaim",
+    "inputs": [{
+        "type": "uint64",
+        "name": "id",
+        "internalType": "uint64"
+    }, {
+        "type": "uint256",
+        "name": "amount",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "string",
+        "name": "",
+        "internalType": "string"
+    }],
+    "name": "name",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "renounceRole",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }, {
+        "type": "address",
+        "name": "callerConfirmation",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "revokeRole",
+    "inputs": [{
+        "type": "bytes32",
+        "name": "role",
+        "internalType": "bytes32"
+    }, {
+        "type": "address",
+        "name": "account",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setBaseSize",
+    "inputs": [{
+        "type": "uint256",
+        "name": "size",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setBaseSpeed",
+    "inputs": [{
+        "type": "uint256",
+        "name": "speed",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setBurnRate",
+    "inputs": [{
+        "type": "uint256",
+        "name": "burnRate",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setCore",
+    "inputs": [{
+        "type": "address",
+        "name": "coreAddress",
+        "internalType": "address"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setDiffuculty",
+    "inputs": [{
+        "type": "uint256",
+        "name": "value",
+        "internalType": "uint256"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setMinLevels",
+    "inputs": [{
+        "type": "uint8",
+        "name": "minSpeed",
+        "internalType": "uint8"
+    }, {
+        "type": "uint8",
+        "name": "minSize",
+        "internalType": "uint8"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setParameters",
+    "inputs": [{
+        "type": "uint8[2]",
+        "name": "parameters",
+        "internalType": "uint8[2]"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "setParentsPercents",
+    "inputs": [{
+        "type": "uint256[2]",
+        "name": "_percents",
+        "internalType": "uint256[2]"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "bool",
+        "name": "",
+        "internalType": "bool"
+    }],
+    "name": "supportsInterface",
+    "inputs": [{
+        "type": "bytes4",
+        "name": "interfaceId",
+        "internalType": "bytes4"
+    }]
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "string",
+        "name": "",
+        "internalType": "string"
+    }],
+    "name": "symbol",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint256",
+        "name": "",
+        "internalType": "uint256"
+    }],
+    "name": "totalBurned",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint256",
+        "name": "",
+        "internalType": "uint256"
+    }],
+    "name": "totalClaimed",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "view",
+    "outputs": [{
+        "type": "uint256",
+        "name": "",
+        "internalType": "uint256"
+    }],
+    "name": "totalSupply",
+    "inputs": []
+}, {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "outputs": [],
+    "name": "updateParameter",
+    "inputs": [{
+        "type": "uint64",
+        "name": "userId",
+        "internalType": "uint64"
+    }, {
+        "type": "uint8",
+        "name": "parameterId",
+        "internalType": "uint8"
+    }, {
+        "type": "uint24",
+        "name": "multiplier",
+        "internalType": "uint24"
+    }, {
+        "type": "uint256",
+        "name": "adder",
+        "internalType": "uint256"
+    }]
+}]

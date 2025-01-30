@@ -1,88 +1,146 @@
-import { useState, useCallback } from "react";
-import { DashboardCard, DashboardCardDisabled } from './index.jsx';
-import refreshImage from '/refresh.svg';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { RefreshButton, DashboardCard, DashboardCardDisabled, Popup, PopupChildSettings } from './index.jsx';
+import gearImage from '/gear.svg';
+import swapImage from '/swap.svg';
 
-export default function Dashboard({profilesData, updateProfiles, miningQueue}) {
+import { contractsInfo } from '../utils/Constants';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateProfiles } from '../store/profilesSlice';
+
+export default function Dashboard({loading, miningQueue}) {
+  const dispatch = useDispatch();
+
+  const profilesData = useSelector((state) => state.profilesData.profiles);
+  const profilesDataRef = useRef(profilesData);
+
   const dataIsEmpty = !profilesData.length;
   const [buttonDisabled, setButtonDisabled] = useState(false);
   const [isOpenPopup, setIsOpenPopup] = useState(false);
-  const [onMouseDownPopup, setOnMouseDownPopup] = useState(false);
-  const [onMouseHoverPopup, setOnMouseHoverPopup] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [contentPopup, setContentPopup] = useState('');
 
-  async function refresh() {
-    if(!buttonDisabled) {
-      setButtonDisabled(true)
-      await updateProfiles()
-      setButtonDisabled(false)
-    }
-  }
+  const [mainContract, setMainContract] = useState(contractsInfo[0].name);
 
-  function didEventInPopup(event) {
-    return !event.target.closest('.popup__container');
-  }
+  const [visibleContract, setVisibleContract] = useState('');
 
-  function onMousePointing(event) { //Изменение цвета кнопки при наведении на задний фон попапа
-    if (didEventInPopup(event)) {
-      setOnMouseHoverPopup(true)
+  useEffect(() => {
+    profilesDataRef.current = profilesData;
+  }, [profilesData]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      for ([index, porfile] of profilesDataRef.current.entries()) {
+        if (profile.PXLs?.disabled) await dispatch(updateProfiles([index, ['PXLs']]));
+        if (profile.Jade?.disabled) await dispatch(updateProfiles([index, ['Jade']]));
+      }
+    }, 30 * 60 * 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []); //Включение отключённых контрактов у профилей каждые 30 минут
+
+  function change() {
+    if (visibleContract === "Jade") {
+      setVisibleContract("PXLs");
     } else {
-      setOnMouseHoverPopup(false)
+      setVisibleContract("Jade");
     }
   }
 
-  const openPopup = useCallback((error) => {
-    setErrorMessage(error);
+  const openErrorPopup = useCallback((error) => {
+    setContentPopup(error);
     setIsOpenPopup(true);
   }, []);
 
-  function closePopup(event) {
-    (didEventInPopup(event) && onMouseDownPopup) && setIsOpenPopup(false); 
+  function openSettingsPopup(error) {
+    setContentPopup(<PopupChildSettings setIsOpenPopup={setIsOpenPopup} />);
+    setIsOpenPopup(true);
   }
-
-  const setName = useCallback((name) => { //Длинное имя будет превращено в abc..xyz;
-    const length = name.length;
-    return length > 9 ? name.slice(0, 4) + '..' + name.slice(length - 4, length) : name;
-  }, []);
 
   function createCards() {
     if (dataIsEmpty) return <p className="dashboard__text">No profiles</p>;
 
-    return profilesData.map((profile, index) => {
+    const profiles = loading ? [loading] : profilesData;
+
+    return profiles.map((profile, index) => {
       if (Number.isInteger(profile)) {
         return Array.from({length: profile}, (_, i) => (
-          <div className="profile load" key={`${index}-${i}`}></div>
+          <div className="profile-container" key={`${index}-${i}`}>
+            <div className="profile load"></div>
+          </div>
         ));
-      }
+      };
 
       const passedProps = {
         index,
-        setName,
-        openPopup,
         name: profile.name,
         publicKey: profile.publicKey,
       };
+
+      if (profile.disabled) return (
+        <div key={index} className="profile-container">
+          <DashboardCardDisabled {...passedProps} error={profile.error} openPopup={openErrorPopup} />
+        </div>
+      );
       
-      return profile.disabled
-             ? <DashboardCardDisabled key={index} {...passedProps} error={profile.error} updateProfiles={updateProfiles} />
-             : <DashboardCard key={index} {...passedProps} id={profile.id} balance={profile.balance} claimTimestamp={profile.claimTimestamp}
-                              sizeLimit={profile.sizeLimit} rewardPerSecond={profile.rewardPerSecond} refLimit={profile.refLimit}
-                              refStorage={profile.refStorage} miningQueue={miningQueue} />
+      return (
+        <div key={index} className="profile-container">
+          {
+            contractsInfo.map(({name, image, color, explorer, divider}, i) => {
+
+              if (profile[name].disabled) return <DashboardCardDisabled
+                key={`${index}-${i}`}
+                {...passedProps}
+                error={profile[name].error}
+                openPopup={openErrorPopup}
+                contractName={name}
+                visibleContract={visibleContract}
+                explorer={explorer}
+              />
+
+              return <DashboardCard
+                key={`${index}-${i}`}
+                {...passedProps}
+                id={profile.id}
+                balance={profile[name].balance}
+                claimTimestamp={profile[name].claimTimestamp}
+                sizeLimit={profile[name].sizeLimit}
+                rewardPerSecond={profile[name].rewardPerSecond}
+                refLimit={profile[name].refLimit}
+                refStorage={profile[name].refStorage}
+                miningQueue={miningQueue}
+                contractName={name}
+                visibleContract={visibleContract}
+                tokenImage={image}
+                tokenColor={color}
+                explorer={explorer}
+                divider={divider}
+              />
+            })
+          }
+        </div>
+      )
     })
   }
 
   return (
-    <div className={`dashboard ${dataIsEmpty ? "dashboard__empty" : ""}`}>
-      {!dataIsEmpty && <button className="button dashboard__refresh" disabled={buttonDisabled} onClick={refresh}>
-        <img className={buttonDisabled ? "button__image-rotate" : ""} src={refreshImage}/>
-      </button>}
+    <div className={'dashboard' + (dataIsEmpty ? " dashboard__empty" : "")}>
+      {!dataIsEmpty && <div className="dashboard__buttons">
+        <RefreshButton />
+        <button className="button dashboard__button" onClick={openSettingsPopup}>
+          <img src={gearImage}/>
+        </button>
+        <button className="button dashboard__button" onClick={change}>
+          <img src={swapImage}/>
+        </button>
+      </div>}
 
       {createCards()}
 
-      {isOpenPopup &&
-        <div className="popup" onMouseOver={onMousePointing} onMouseOut={onMousePointing} onMouseDown={() => setOnMouseDownPopup(didEventInPopup(event))} onMouseUp={closePopup}>
-          <button className={'popup__button-close' + (onMouseHoverPopup ? ' popup__button-close_active' : '')}></button>
-          <div className="popup__container">{errorMessage}</div>
-        </div>
+      {
+        isOpenPopup && <Popup setIsOpenPopup={setIsOpenPopup}>
+          {contentPopup}
+        </Popup>
       }
     </div>
   );

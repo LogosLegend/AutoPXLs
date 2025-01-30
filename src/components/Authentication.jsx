@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { invoke } from '@tauri-apps/api';
+import { invoke } from '@tauri-apps/api/core';
 import { inputErrors } from '../utils/Constants.jsx';
+import { useDispatch } from 'react-redux';
+import { setPassword } from '../store/passwordSlice';
 
-export default function Authentication({value, setValue, setAuthorized, setError}) {
+export default function Authentication({setAuthorized, setError}) {
+  const dispatch = useDispatch();
   const hash = localStorage.getItem('auth')  ?? '';
+  const [value, setValue] = useState('');
   const [buttonDisabled, setButtonDisabled] = useState(false);
   const [animation, setAnimation] = useState(false);
 
@@ -12,31 +16,31 @@ export default function Authentication({value, setValue, setAuthorized, setError
 
     if (value) {
       if(!buttonDisabled) {
-        setTimeout(setButtonDisabled, 0, true);
-        const timeout = setTimeout(setAnimation, 100, true);
+        setButtonDisabled(true);
+        setAnimation(true);
         
-        if (value) {
-          if (hash) {
-            const isCorrect = await invoke('verify_password', {password: value, hash: hash});
-            if (isCorrect) {
-              setAuthorized(true);
-            } else {
-              setError([true, inputErrors.incorrectPassword]);
-            }
-          } else {
-            localStorage.clear();
-            const newHash = await invoke('hash_password', { password: value });
-            localStorage.setItem('auth', newHash);
+        if (hash) {
+          const isCorrect = await invoke('verify_password', {password: value, hash: hash});
+          if (isCorrect) {
             setAuthorized(true);
+            dispatch(setPassword(value));
+          } else {
+            setError(inputErrors.incorrectPassword);
           }
+        } else {
+          localStorage.removeItem('auth');
+          localStorage.removeItem('profilesData');
+          const newHash = await invoke('hash_password', { password: value });
+          localStorage.setItem('auth', newHash);
+          setAuthorized(true);
+          dispatch(setPassword(value));
         }
 
-        clearTimeout(timeout); //Если скрипт выполнится быстрее чем за 0.1 секунду, таймер не запустится
         setAnimation(false);
         setButtonDisabled(false);
       }
     } else {
-      setError([true, inputErrors.emptyField]);
+      setError(inputErrors.emptyField);
     }
   }
 

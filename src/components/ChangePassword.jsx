@@ -1,12 +1,20 @@
 import { useState } from 'react';
-import { invoke } from '@tauri-apps/api';
-import { inputErrors } from '../utils/Constants.jsx';
+import { invoke } from '@tauri-apps/api/core';
+import { inputErrors } from '../utils/Constants';
+import { encrypt, decrypt } from '../utils/Functions';
+import { useDispatch, useSelector } from 'react-redux';
+import { setProfiles } from '../store/profilesSlice';
+import { setAuthorized } from '../store/authorizedSlice';
+import { setPage } from '../store/pageSlice';
 
-export default function ChangePassword({encrypt, decrypt, profilesData, setAuthorized}) {
+export default function ChangePassword() {
+  const dispatch = useDispatch();
+  const profilesData = useSelector((state) => state.profilesData.profiles);
+  
   const hash = localStorage.getItem('auth') ?? '';
   const [value, setValue] = useState({currentPassword: '', newPassword: ''});
   const [buttonDisabled, setButtonDisabled] = useState(false);
-  const [error, setError] = useState([false, '']);
+  const [error, setError] = useState('');
 
   function changeValue(value, property) {
     setValue(prev => {
@@ -27,11 +35,11 @@ export default function ChangePassword({encrypt, decrypt, profilesData, setAutho
           const isCorrect = await invoke('verify_password', {password: value.currentPassword, hash: hash});
 
           if (isCorrect) { //Проверка пароля
-            const newHash = await invoke('hash_password', { password: value.newPassword });
+            const newHash = await invoke('hash_password', {password: value.newPassword});
 
             const decryptedProfiles = profilesData.map(profile => ({
               ...profile,
-              privateKey: decrypt(profile.privateKey, profile.salt, profile.iv)
+              privateKey: decrypt(profile.privateKey, profile.salt, profile.iv, value.currentPassword)
             }));
 
             const encryptedProfiles = decryptedProfiles.map(profile => {
@@ -45,16 +53,17 @@ export default function ChangePassword({encrypt, decrypt, profilesData, setAutho
             });
             
             localStorage.setItem('auth', newHash);
-            localStorage.setItem('profilesData', JSON.stringify(encryptedProfiles));
-            setAuthorized(false)
+            dispatch(setProfiles(encryptedProfiles));
+            dispatch(setAuthorized(false));
+            dispatch(setPage('authentication'));
           } else {
-            setError([true, inputErrors.incorrectPassword]);
+            setError(inputErrors.incorrectPassword);
           }
         } else {
-          setError([true, inputErrors.emptyField]);
+          setError(inputErrors.emptyField);
         }
       } else {
-        setError([true, inputErrors.internalError]);
+        setError(inputErrors.internalError);
       }
       setButtonDisabled(false);
     }
@@ -62,7 +71,7 @@ export default function ChangePassword({encrypt, decrypt, profilesData, setAutho
 
   return (
     <form className="form form__change" onSubmit={submit}>
-      <p className="error_small">{error[0] && error[1]}</p>
+      <p className="error_small">{error}</p>
       <input
         className="form__password"
         value={value.currentPassword}

@@ -1,22 +1,39 @@
 import { useState, memo } from "react";
 import refreshImage from '/refresh.svg';
 
-function DashboardCardDisabled({name, publicKey, error, index, setName, openPopup, updateProfiles}) {
+import { setNameAbbreviation } from '../utils/Functions';
+import { useDispatch } from 'react-redux';
+import { updateProfiles } from '../store/profilesSlice';
+
+function DashboardCardDisabled({
+  name,
+  publicKey,
+  error,
+  index,
+  openPopup,
+  contractName,
+  visibleContract,
+  explorer,
+}) {
+  const dispatch = useDispatch();
+  
+  const profileClass = visibleContract ? (contractName === visibleContract ? "profile-show" : "profile-hide") : (contractName === 'PXLs' ? "profile-show-default" : "");
+  const profileDisabled = !contractName ? "profile-show-default" : "";
   const [buttonDisabled, setButtonDisabled] = useState(false);
 
   async function refresh() {
     if(!buttonDisabled) {
-      setButtonDisabled(true)
-      await updateProfiles(index)
-      setButtonDisabled(false)
+      setButtonDisabled(true);
+      await dispatch(updateProfiles([index]));
+      setButtonDisabled(false);
     }
   }
 
   return (
-    <div className="profile">
-      {publicKey
-       ? <a className="profile__title" title={name} target="_blank" rel="noopener noreferrer" href={'https://songbird-explorer.flare.network/address/' + publicKey}>{setName(name)}</a>
-       : <h2 className="profile__title" title={name}>{setName(name)}</h2>
+    <div className={`profile ${profileClass} ${profileDisabled}`}>
+      {publicKey && explorer
+       ? <a className="profile__title" title={name} target="_blank" rel="noopener noreferrer" href={explorer + publicKey}>{setNameAbbreviation(name)}</a>
+       : <h2 className="profile__title" title={name}>{setNameAbbreviation(name)}</h2>
       }
       <div className="profile__error" onClick={() => openPopup(error)}>
         <p className="profile__message">{error}</p>

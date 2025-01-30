@@ -2,45 +2,38 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:3333",
-    "distDir": "../dist"
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:3333"
   },
-  "package": {
-    "productName": "AutoPXLs",
-    "version": "1.1.1"
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ]
   },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      }
-    },
-    "systemTray": {
+  "productName": "AutoPXLs",
+  "mainBinaryName": "AutoPXLs",
+  "version": "1.5.0",
+  "identifier": "AutoPXLs",
+  "plugins": {},
+  "app": {
+    "trayIcon": {
       "iconPath": "icons/128x128.png",
       "iconAsTemplate": true
+    },
+    "security": {
+      "csp": null
     },
     "windows": [
       {
         "title": "AutoPXLs",
-        "width": 905,
-        "height": 623
+        "width": 1188,
+        "height": 620
       }
-    ],
-    "security": {
-      "csp": null
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "AutoPXLs",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.ico"
-      ]
-    }
+    ]
   }
 }

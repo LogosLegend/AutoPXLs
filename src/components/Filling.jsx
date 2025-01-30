@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export default function Filling({claimTimestamp, size, fillingTime}) {
+export default function Filling({claimTimestamp, size, fillingTime, tokenColor}) {
   const [timestamp, setTimestamp] = useState(Math.round(Date.now() / 1000));
   const percent = Math.min(1, Math.max(0, (timestamp - claimTimestamp) / fillingTime)); //Сколько времени заполняется хранилище? Насколько % заполнено хранилище?
 
@@ -19,7 +19,7 @@ export default function Filling({claimTimestamp, size, fillingTime}) {
 
   return (
     <>
-      <div className="profile__filling profile__filling_storage" style={{width: currentSizeWidth}}></div>
+      <div className="profile__filling" style={{width: currentSizeWidth, background: tokenColor}}></div>
       <p className="profile__progress-text">{currentSize}</p>
     </>
   )

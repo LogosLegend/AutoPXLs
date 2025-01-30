@@ -1,241 +1,173 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Dashboard, Profiles, ChangePassword } from './index.jsx';
-import {
-  web3,
-  PXLsContract,
-  PXLsChestContract,
-  tokenDivider,
-} from '../utils/Constants.jsx'
+import { Dashboard, Profiles, ChangePassword } from './index';
+import { networks, contractsConfig } from '../utils/Constants';
+import { checkAuthentication, updateProfilesData, decrypt, createWeb3, createContract } from '../utils/Functions';
+import { useDispatch, useSelector } from 'react-redux';
+import { setGlobalAuthorized } from '../store/globalAuthorizedSlice';
+import { updateProfiles, disableMiner } from '../store/profilesSlice';
+import { setPage } from '../store/pageSlice';
 
-export default function MinerApp({encrypt, decrypt, setAuthorized}) {
-  const [page, setPage] = useState('dashboard');
+export default function MinerApp() {
+  const dispatch = useDispatch();
+  const profilesData = useSelector(state => state.profilesData.profiles);
+  const profilesDataRef = useRef(profilesData);
+  const password = useSelector(state => state.password.data);
+  const page = useSelector(state => state.page.data);
+
   const [buttonDashboardDisabled, setButtonDashboardDisabled] = useState(true);
   const [buttonProfilesDisabled, setButtonProfilesDisabled] = useState(false);
   const [buttonChangeDisabled, setButtonChangeDisabled] = useState(false);
   
-  const localStorageProfilesData = JSON.parse(localStorage.getItem('profilesData'));
-  const [profilesData, setProfilesData] = useState(localStorageProfilesData ? [localStorageProfilesData.length] : []);
-  const profilesDataRef = useRef(localStorageProfilesData || []);
-
   const miningQueueRef = useRef([]);
-  const miningCurrentProfile = useRef('');
+  const miningCurrentProfile = useRef({}); //Профиль для которого в данный момент выполняется mining. Во время выполнения функции содержит id профиля и имя контракта {id, contractName}
   const isProcessing = useRef(false);
+
+  const [loading, setLoading] = useState(profilesData.length);
 
   useEffect(() => {
     (async () => {
-      await updateProfiles();
+      dispatch(setPage('dashboard'));
+      await dispatch(updateProfiles([]));
+      setLoading(false);
     })()
-  }, []); //Обновление данных при запуске
+  }, []); //Обновление данных профилей при запуске
 
-  function changePage(page) {
-    const buttons = {
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!await checkAuthentication()) dispatch(setGlobalAuthorized(false));
+    }, 1800000); //Проверка сессии каждые 30 минут (Единовременно может существовать только одна)
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    profilesDataRef.current = profilesData;
+  }, [profilesData]);
+
+  function changePage(page) { //Переход в другой раздел страницы
+    const buttons = { //Объект с функциями для обновления state переменных отвечающих за выключение кнопок
       dashboard: setButtonDashboardDisabled,
       profiles: setButtonProfilesDisabled,
       change: setButtonChangeDisabled
     };
 
-    for (const button in buttons) {
-      buttons[button](button === page);
+    for (const button in buttons) { //Обновление всех state переменных из buttons
+      buttons[button](button === page); // — это setButtonDisabled(true or false)
     }
-    if (page !== 'dashboard') miningQueueRef.current = [];
-    setPage(page);
+    if (page !== 'dashboard') miningQueueRef.current = []; //Очищение очереди
+    dispatch(setPage(page));
   }
 
   function createPage() {
     switch (page) {
       case 'dashboard':
-        return <Dashboard profilesData={profilesData} updateProfiles={updateProfiles} miningQueue={miningQueue}/>
+        return <Dashboard loading={loading} miningQueue={miningQueue} />
       case 'profiles':
-        return <Profiles decrypt={decrypt} profilesData={profilesDataRef.current} saveData={saveData}/>
+        return <Profiles setLoading={setLoading} changePage={changePage} />
       case 'change':
-        return <ChangePassword encrypt={encrypt} decrypt={decrypt} profilesData={profilesDataRef.current} setAuthorized={setAuthorized}/>
+        return <ChangePassword />
     }
   }
 
-  function updateVariables(data) {
-    localStorage.setItem('profilesData', JSON.stringify(data));
-    profilesDataRef.current = data;
-    setProfilesData(data);
-  }
-
-  async function saveData(data) { //[{name: '', privateKey: '', disabled: false}
-    setProfilesData([data.length]); //Создание профилей с анимацией загрузки
-    changePage('dashboard');
-
-    const updateProfilesData = await Promise.all(data.map(async (profile) => {
-      if (!profile.id) {
-        try {
-          const account = web3.eth.accounts.privateKeyToAccount(profile.privateKey);
-          profile.publicKey = account.address;
-          encryptProfile(profile);
-          profile = await getDataFromBlockchain(profile);
-        } catch {
-          encryptProfile(profile);
-          profile.disabled = true;
-          profile.error = "Incorrect Private Key"
-        }
-      } else {
-        encryptProfile(profile);
-      }
-      return profile;
-    }));
-
-    function encryptProfile(profile) {
-      [profile.salt, profile.iv, profile.privateKey] = encrypt(profile.privateKey);
-    }
-
-    updateVariables(updateProfilesData);
-  }
-
-  async function getIdFromBlockchain(address) {
-    try {
-      const id = Number(await PXLsContract.methods.getAddressId(address).call());
-      if (id === 0) throw new Error("This address is not linked to any Telegram account in Pixel Wallet");
-      return id;
-    } catch (error) {
-      const message = error.code === 1100 ? "Incorrect profile property: address" : error.message;
-      throw new Error(message);
-    }
-  }
-
-  async function getDataFromBlockchain(profile) {
-    try {
-      const id = profile.id ?? await getIdFromBlockchain(profile.publicKey);
-
-      const {user: {claimTimestamp, refStorage}, sizeLimit, rewardPerSecond, refLimit, balance, prices}
-      = await PXLsContract.methods.getStorage(id).call();
-
-      if (Number(rewardPerSecond) === 0) throw new Error("This Telegram id is not linked to any Pixel Wallet")
-
-      const newProfile = (
-        ({error, ...restData}) => ({
-          ...restData,
-          id,
-          disabled: false,
-          claimTimestamp: Number(claimTimestamp),
-          sizeLimit: Number(sizeLimit),
-          rewardPerSecond: Number(rewardPerSecond),
-          refLimit: Number(refLimit),
-          refStorage: Number(refStorage),
-          balance: Number(balance),
-          prices: prices.map(Number)
-        })
-      )(profile);
-
-      return newProfile;
-    } catch (error) {
-      const message = error.code === 1100 ? "Incorrect profile property: id" : error.message;
-      profile = {
-        name: profile.name,
-        privateKey: profile.privateKey,
-        salt: profile.salt,
-        iv: profile.iv,
-        publicKey: profile.publicKey,
-        disabled: true,
-        error: message
-      };
-
-      return profile;
-    }
-  }
-
-  const updateProfiles = useCallback(async (profileIndex = 'all') => { //Обновление данных
-    const updateProfilesData = [...profilesDataRef.current];
-    const profilesToUpdate = profileIndex === 'all' ? updateProfilesData : [updateProfilesData[profileIndex]];
-
-    await Promise.all(profilesToUpdate.map(async (profile, index) => {
-      if (profile.publicKey) {
-        const updatedProfile = await getDataFromBlockchain(profile);
-        const updateIndex = profileIndex === 'all' ? index : profileIndex;
-        updateProfilesData[updateIndex] = updatedProfile;
-      }
-    }));
-
-    updateVariables(updateProfilesData);
-    return updateProfilesData;
-  }, []);
-
-  function disableProfile(index, error) { //Отключение профиля
-    const updateProfilesData = [...profilesDataRef.current];
-
-    updateProfilesData[index] = (
-      ({name, privateKey, publicKey, salt, iv, ...restData}) => ({ //Удаление данных с помощью деструктурирующего присваивания
-        name,
-        privateKey,
-        salt,
-        iv,
-        publicKey,
-        error,
-        disabled: true,
-      })
-    )(updateProfilesData[index]);
-
-    updateVariables(updateProfilesData);
-  }
-
-  async function getGasLimit(from, to, data) {
+  async function getGasLimit(web3, from, to, data) {
     const gas = await web3.eth.estimateGas({
       from,
       to,
-      "data": data.encodeABI()
+      data: data.encodeABI()
     });
-    return Math.round(Number(gas) * 1.1); //Лимит +10%
+    return Math.round(Number(gas) * 1.1); //Повышение лимита газа на 10%
   }
 
-  async function sendTransaction(contract, methodName, from, data) {
+  async function sendTransaction(contract, contractName, methodName, web3, from, data) {
     try {
       const to = contract._address;
-      const method = contract.methods[methodName](data);
+      const method = data ? contract.methods[methodName](data) : contract.methods[methodName]();
 
-      const gasLimit = await getGasLimit(from, to, method)
+      const gasLimit = await getGasLimit(web3, from, to, method);
       const result = await method.send({from, gasLimit});
     } catch (error) {
-      if (error.message === 'Error happened while trying to execute a function inside a smart contract') {
-        const message = error.cause?.message;
-        if (methodName !== "claimWeeklyChest") throw new Error(message);
-      } else {
-        throw new Error(error.message)
-      }
+      const code = error.error?.code;
+
+      const message = error.error.cause?.message;
+      const newMessage = message.includes('gas * price + value') ? 'Out of gas to pay' : message;
+      if (methodName !== "claimWeeklyChest" || code !== 310) throw Error(newMessage); //claimWeeklyChest доступен 1 раз в неделю, 310 — ошибка выполнения контракта
     }
   }
 
-  async function mining(index, fillingTime) {
-    const {id, privateKey, salt, iv, publicKey, prices, refLimit} = profilesDataRef.current[index];
-    let {balance, refStorage} = profilesDataRef.current[index].balance;
+  async function mining(index, fillingTime, contractName) {
+    const {id, privateKey, salt, iv, publicKey, proxy, userAgent} = profilesDataRef.current[index];
+    const {prices, refLimit, upgrade} = profilesDataRef.current[index][contractName];
+    let balance = profilesDataRef.current[index][contractName].balance;
 
     try {
-      const decryptedPrivateKey = decrypt(privateKey, salt, iv);
-      await web3.eth.accounts.wallet.add(decryptedPrivateKey);
+      const contractConfig = contractsConfig[contractName]; //Данные контракта
+      const web3 = createWeb3(networks[contractConfig.network].rpc, {proxy, userAgent}); //Соединение с RPC
+      const contract = createContract(web3, contractConfig.contract); //Создание экземпляра контракта
 
-      refStorage = (await updateProfiles(index))[index].refStorage; //Обновление реферального хранилища перед проверкой
+      try {
+        const decryptedPrivateKey = decrypt(privateKey, salt, iv, password); //Расшифровка приватного ключа
+        await web3.eth.accounts.wallet.add(decryptedPrivateKey); //Добавление приватного ключа в кошелёк для дальнейшего взаимодействия
 
-      if ((refStorage / refLimit) > 0.85) { //Хранилище заполнено на 85%?
-        await sendTransaction(PXLsContract, "claimReferral", publicKey, id); //Клейм реф хранилища
-        balance = (await updateProfiles(index))[index].balance;
+        if (contractConfig.referals) { //Есть ли у контракта реферальная система?
+          const refStorage = (await updateProfilesData(profilesDataRef.current, index, contractName))[index][contractName].refStorage; //Обновление реферального хранилища перед проверкой
+
+          if ((refStorage / refLimit) > 0.7) { //Хранилище заполнено на 70%?
+            await sendTransaction(contract, contractName, "claimReferral", web3, publicKey, id); //Клейм реферального хранилища
+            balance = (await updateProfilesData(profilesDataRef.current, index, contractName))[index][contractName].balance; //Обновление баланса
+          }
+        }
+
+        if (contractConfig.chest) { //Есть ли у контракта еженедельная награда?
+          const chest = createContract(web3, contractConfig.chest);
+          await sendTransaction(chest, contractName, "claimWeeklyChest", web3, publicKey); //Клейм NFT
+          //При вызове метода происходит проверка транзакций за последние 7 дней. При успешном моделировании метод будет вызван в основной сети
+        }
+
+        async function claimReward() {
+          await sendTransaction(contract, contractName, "claimReward", web3, publicKey, id);
+        }
+
+        async function processUpgrade(isFillingQuickly, priceIndex) {
+          const nextUpgradePrice = prices[priceIndex]; //Улучшать хранилище[1] или дрель[0]?
+          const upgradeType = isFillingQuickly ? "buySizeLevel" : "buySpeedLevel";
+          if (balance > nextUpgradePrice) {
+            await sendTransaction(contract, contractName, upgradeType, web3, publicKey, id); //Улучшение и клейм
+          } else {
+            await claimReward(); //Клейм
+          }
+        };
+
+        if (contractConfig.upgrade) { //Есть ли у контракта возможность улучшения?
+          const {drill, storage} = upgrade; //Булевые переменные
+          if (drill && storage) { //Разрешены все улучшения?
+            const isFillingQuickly = fillingTime < 10800; //Хранилище заполняется менее чем за 3 часа?
+            await processUpgrade(isFillingQuickly, isFillingQuickly ? 1 : 0);
+          } else if (drill) { //Разрешена улучшение дрель?
+            await processUpgrade(false, 0);
+          } else if (storage) { //Разрешено улучшение хранилища?
+            await processUpgrade(true, 1);
+          } else { //Улучшения отключены
+            await claimReward(); //Клейм
+          }
+        } else {
+          await claimReward(); //Клейм
+        }
+
+        await dispatch(updateProfiles([index, contractName])); //Обновление профиля
+      } catch (error) {
+        await dispatch(disableMiner([index, error.message, contractName])); //Отключение профилю возможности взаимодействия с контрактом
+      } finally {
+        await web3.eth.accounts.wallet.clear(); //Очищение кошелька от адресов
       }
-
-      await sendTransaction(PXLsChestContract, "claimWeeklyChest", publicKey, ''); //Клейм NFT
-      //При вызове метода считаются транзакции за каждый день недели. Метод будет вызван при успешном моделировании
-
-      const isFillingQuickly = fillingTime < 10800; //Хранилище заполняется менее чем за 3 часа?
-      const nextUpgradePrice = isFillingQuickly ? prices[1] : prices[0]; //Прокачивать хранилище или дрель?
-
-      if (balance > nextUpgradePrice) {
-        const upgradeType = isFillingQuickly ? "buySizeLevel" : "buySpeedLevel";
-        await sendTransaction(PXLsContract, upgradeType, publicKey, id); //Прокачка и клейм
-      } else {
-        await sendTransaction(PXLsContract, "claimReward", publicKey, id); //Клейм
-      }
-      await updateProfiles(index);
-    } catch (error) {
-      await disableProfile(index, error.message);
-    } finally {
-      await web3.eth.accounts.wallet.clear();
+    } catch(error) {
+      await dispatch(disableMiner([index, error.message, contractName])); //Отключение профилю возможности взаимодействия с контрактами
     }
   }
 
-  const miningQueue = useCallback((index, fillingTime, id) => { //Добавить в очередь
-    miningQueueRef.current.push([() => mining(index, fillingTime), id]);
+  const miningQueue = useCallback((index, fillingTime, id, contractName) => { //Добавить в очередь (необходима для избежания попадания всех транзакций в один блок)
+    miningQueueRef.current.push([() => mining(index, fillingTime, contractName), id, contractName]);
     startQueue();
   }, []);
 
@@ -245,9 +177,9 @@ export default function MinerApp({encrypt, decrypt, setAuthorized}) {
     isProcessing.current = true;
 
     while (miningQueueRef.current.length > 0) {
-      const [miningFunction, id] = miningQueueRef.current.shift();
-      if (id !== miningCurrentProfile.current) { //Проверка на повторный профиль
-        miningCurrentProfile.current = id;
+      const [miningFunction, id, contractName] = miningQueueRef.current.shift();
+      if (id !== miningCurrentProfile.id || contractName !== miningCurrentProfile.contractName) { //Проверка на повторный профиль или контракт
+        miningCurrentProfile.current = {id, contractName};
         await miningFunction();
       }
     }
@@ -257,7 +189,7 @@ export default function MinerApp({encrypt, decrypt, setAuthorized}) {
 
   return (
     <div className="container">
-      <h1 className="container__title">Welcome to AutoPXLs!</h1>
+      <h1 className="container__title">Welcome to AutoPixel!</h1>
       <div className="container__buttons">
         <button className={`container__button container__button-dashboard ${page === "dashboard" ? "container__button-dashboard_active" : ''}`}
                 onClick={() => changePage('dashboard')} disabled={buttonDashboardDisabled}></button>
