@@ -1,7 +1,6 @@
-# Tauri + React
+## Приложение для автоматического взаимодействия со смартконтрактами в EVM-сетях React/Tauri/Web3js
+Смарт-контракты представляют из себя "игру-майнер" которая автоматически добывает токен, имеет улучшаемые характеристики и еженедельные задания
 
-This template should help get you started developing with Tauri and React in Vite.
+Демо:
 
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+![Demo](https://github.com/user-attachments/assets/cc0331f2-49ca-48c4-aa40-8a56b7a9d8fa)
